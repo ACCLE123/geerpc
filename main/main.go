@@ -4,7 +4,6 @@ import (
 	geerpc "gee-rpc"
 	"log"
 	"net"
-	"sync"
 )
 
 type Foo int
@@ -32,20 +31,20 @@ func main() {
 	log.SetFlags(0)
 	addr := make(chan string)
 	go startServer(addr)
-	client, _ := geerpc.Dial("tcp", <-addr)
+	//client, _ := geerpc.Dial("tcp", <-addr)
 
-	var wg sync.WaitGroup
-	for i := 0; i < 5; i++ {
-		wg.Add(1)
-		go func(i int) {
-			defer wg.Done()
-			args := &Args{i, i * i}
-			var reply int
-			if err := client.Call("Foo.Sum", args, &reply); err != nil {
-				log.Fatal(err)
-			}
-			log.Printf("%d + %d = %d", args.Num1, args.Num2, reply)
-		}(i)
-	}
-	wg.Wait()
+	//var wg sync.WaitGroup
+	//for i := 0; i < 5; i++ {
+	//	wg.Add(1)
+	//	go func(i int) {
+	//		defer wg.Done()
+	//		args := &Args{i, i * i}
+	//		var reply int
+	//		if err := client.Call("Foo.Sum", args, &reply); err != nil {
+	//			log.Fatal(err)
+	//		}
+	//		log.Printf("%d + %d = %d", args.Num1, args.Num2, reply)
+	//	}(i)
+	//}
+	//wg.Wait()
 }
