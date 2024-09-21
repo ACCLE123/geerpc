@@ -1,18 +1,18 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	geerpc "gee-rpc"
-	"gee-rpc/codec"
 	"log"
 	"net"
+	"sync"
+	"time"
 )
 
 func startServer(addr chan string) {
 	l, err := net.Listen("tcp", ":0")
 	if err != nil {
-		log.Println(err)
+		panic(err)
 	}
 	addr <- l.Addr().String()
 	geerpc.DefaultServer.Accept(l)
@@ -21,23 +21,24 @@ func startServer(addr chan string) {
 func main() {
 	addr := make(chan string)
 	go startServer(addr)
+	client, _ := geerpc.Dial("tcp", <-addr)
 
-	conn, _ := net.Dial("tcp", <-addr)
-	defer conn.Close()
+	time.Sleep(time.Second)
 
-	json.NewEncoder(conn).Encode(geerpc.DefaultOption)
-	cc := codec.NewGobCodec(conn)
-
+	wg := &sync.WaitGroup{}
 	for i := 0; i < 5; i++ {
-		h := &codec.Header{
-			ServiceMethod: "Foo.Sum",
-			Seq:           uint64(i),
-		}
-		cc.Write(h, fmt.Sprintf("geerpc req %d", h.Seq))
-		cc.ReadHeader(h)
-		var reply string
-		cc.ReadBody(&reply)
-
-		log.Println(reply)
+		wg.Add(1)
+		go handle(client, wg)
 	}
+	wg.Wait()
+}
+
+func handle(client *geerpc.Client, wg *sync.WaitGroup) {
+	defer wg.Done()
+	argv := fmt.Sprintf("hello world %d", 1)
+	var reply string
+	if err := client.Call("Foo.Sum", argv, &reply); err != nil {
+		panic(err)
+	}
+	log.Println("reply: ", reply)
 }
