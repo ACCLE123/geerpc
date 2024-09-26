@@ -178,6 +178,8 @@ func (c *Client) send(call *Call) {
 		Seq:           seq,
 	}
 
+	//log.Println("send argv:", call.Argv)
+
 	if err := c.cc.Write(&c.header, call.Argv); err != nil {
 		call := c.removeCall(seq)
 		if call != nil {
